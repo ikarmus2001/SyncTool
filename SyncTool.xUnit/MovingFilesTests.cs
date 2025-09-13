@@ -2,41 +2,27 @@ using SyncTool.Lib;
 
 namespace SyncTool.xUnit;
 
-public class MovingFilesTests
+public class MovingFilesTests(MovingFilesTestsFixture fixture) : IClassFixture<MovingFilesTestsFixture>
 {
-    /// <summary>
-    ///     Repo path, as it seems to be a reasonable case
-    /// </summary>
-    private readonly string sourcePath = Path.GetFullPath(Environment.CurrentDirectory).TillLastOccurence($"{nameof(SyncTool)}.{nameof(xUnit)}");
-    private readonly string targetPath = Path.Combine(Environment.CurrentDirectory, "Tests", "Target");
-
     [Fact]
-    public void FilesShouldBeMovedToEmptyDirectory()
+    public void FilesAreCopiedToEmptyDirectory()
     {
-        var xd = Directory.Exists(targetPath);
-        Assert.False(xd);
-
         SyncWorker syncWorker = new()
         {
-            SourcePath = sourcePath,
-            TargetPath = targetPath,
+            SourcePath = fixture.sourcePath,
+            TargetPath = fixture.targetPath,
             Period = TimeSpan.Zero
         };
-        try
-        {
 
-            syncWorker.MoveFiles();
+        syncWorker.MoveFiles();
 
-            var movedFiles = Directory.GetFiles(targetPath, "*", SearchOption.AllDirectories);
-            Assert.NotEmpty(movedFiles);
+        var movedFiles = Directory.GetFiles(fixture.targetPath, "*", SearchOption.AllDirectories)
+            .Select(f => Path.GetFileName(f));
+        Assert.NotEmpty(movedFiles);
 
-            var sourceFiles = Directory.GetFiles(sourcePath, "*", SearchOption.AllDirectories);
-            Assert.Equivalent(sourceFiles, movedFiles);
-        }
-        finally
-        {
-            Directory.Delete(targetPath, recursive: true);
-        }
+        var sourceFiles = Directory.GetFiles(fixture.sourcePath, "*", SearchOption.AllDirectories)
+            .Select(f => Path.GetFileName(f));
+        Assert.Equivalent(sourceFiles, movedFiles);
     }
 
     // assure input directory exist
