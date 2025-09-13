@@ -15,7 +15,7 @@ internal static class Extensions
         uint result = 0u;
         foreach (FileInfo sfile in source.GetFiles())
         {
-            result += CopyFileInfo(target, sfile);
+            result += CopyFile(target, sfile);
         }
         foreach (DirectoryInfo dir in source.GetDirectories())
         {
@@ -25,12 +25,7 @@ internal static class Extensions
         return result;
     }
 
-    //internal static uint CopyTo(this FileInfo source, string targetPath)
-    //{
-        
-    //}
-
-    private static uint CopyFileInfo(DirectoryInfo target, FileInfo source)
+    private static uint CopyFile(DirectoryInfo target, FileInfo source)
     {
         try
         {

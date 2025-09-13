@@ -4,11 +4,11 @@ using Xunit.Abstractions;
 
 namespace SyncTool.xUnit;
 
-public class MovingFilesTests : IClassFixture<MovingFilesTestsFixture>
+public class PlainFilesTests : IClassFixture<PlainFilesTestsFixture>
 {
-    private MovingFilesTestsFixture _fixture;
+    private PlainFilesTestsFixture _fixture;
 
-    public MovingFilesTests(MovingFilesTestsFixture fixture, ITestOutputHelper logOutput)
+    public PlainFilesTests(PlainFilesTestsFixture fixture, ITestOutputHelper logOutput)
     {
         _fixture = fixture;
         _fixture.InitLog(logOutput);
@@ -34,6 +34,21 @@ public class MovingFilesTests : IClassFixture<MovingFilesTestsFixture>
     {
         _fixture.AddChangesInFiles();
 
+        SyncWorker syncWorker = new()
+        {
+            SourcePath = _fixture.SourcePath,
+            TargetPath = _fixture.TargetPath,
+            Period = TimeSpan.Zero
+        };
+        syncWorker.SyncFiles();
+
+        AssertDirsContainsEquivalentFiles(_fixture.SourcePath, _fixture.TargetPath);
+    }
+
+    [Fact]
+    public void FilesAreDeletedInTargetDirectory()
+    {
+        _fixture.DeleteRandomFiles();
         SyncWorker syncWorker = new()
         {
             SourcePath = _fixture.SourcePath,

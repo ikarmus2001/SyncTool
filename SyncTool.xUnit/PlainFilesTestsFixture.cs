@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 
 namespace SyncTool.xUnit;
 
-public class MovingFilesTestsFixture : IDisposable
+public class PlainFilesTestsFixture : IDisposable
 {
     private readonly Faker faker = new();
     public ILogger? logger;
@@ -12,7 +12,7 @@ public class MovingFilesTestsFixture : IDisposable
     public string SourcePath { get; init; }
     public string TargetPath { get; init; }
 
-    public MovingFilesTestsFixture()
+    public PlainFilesTestsFixture()
     {
         SourcePath = Path.Combine(
             Path.GetTempPath(),
@@ -71,5 +71,18 @@ public class MovingFilesTestsFixture : IDisposable
     {
         Directory.Delete(SourcePath, recursive: true);
         Directory.Delete(TargetPath, recursive: true);
+    }
+
+    internal void DeleteRandomFiles()
+    {
+        var sourceDirInfo = new DirectoryInfo(SourcePath);
+        var files = sourceDirInfo.GetFiles();
+
+        var filesToDelete = faker.PickRandom(files, faker.Random.Int(1, files.Length));
+        logger?.LogInformation("Deleting files: {file names}", filesToDelete.Select(f => f.FullName + Environment.NewLine));
+        foreach (var file in filesToDelete)
+        {
+            file.Delete();
+        }
     }
 }

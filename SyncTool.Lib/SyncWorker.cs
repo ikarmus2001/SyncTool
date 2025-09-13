@@ -1,4 +1,6 @@
-﻿namespace SyncTool.Lib;
+﻿using System.IO;
+
+namespace SyncTool.Lib;
 
 public class SyncWorker
 {
@@ -8,46 +10,87 @@ public class SyncWorker
 
     public void SyncFiles()
     {
-        DirectoryInfo source = new(SourcePath);
-        DirectoryInfo target = !Directory.Exists(TargetPath)  // && TODO flag for error
-            ? Directory.CreateDirectory(TargetPath) 
+        DirectoryInfo sourceDirInfo = new(SourcePath);
+        DirectoryInfo targetDirInfo = !Directory.Exists(TargetPath)  // && TODO flag for error
+            ? Directory.CreateDirectory(TargetPath)
             : new DirectoryInfo(TargetPath);
 
-        IEnumerable<FileSystemInfo> targetFSInfos = target.EnumerateFileSystemInfos();
-        
+        IEnumerable<FileSystemInfo> targetFSInfos = targetDirInfo.EnumerateFileSystemInfos();
         if (targetFSInfos.Count() == 0)  // optimization for empty target dir
         {
-            source.CopyTo(target);
+            sourceDirInfo.CopyTo(targetDirInfo);
             return;
         }
 
-        IEnumerable<FileSystemInfo> sourceFSInfos = source.EnumerateFileSystemInfos();
-        var pairedFSInfos = sourceFSInfos.Zip(targetFSInfos, 
-                            resultSelector: (source, target) => source.Name == target.Name 
-                                                                ? (source, target) 
-                                                                : (source, null)
+        var targetFsHandling = targetFSInfos
+            .Select(tfi => new FileSysInfoHandling() { handled = false, fsInfo = tfi });
+
+        var sourceFsHandling = sourceDirInfo.EnumerateFileSystemInfos()
+            .Select(sfi => new FileSysInfoHandling() { handled = false, fsInfo = sfi });
+
+        IEnumerable<(FileSysInfoHandling source, FileSysInfoHandling?)> pairedFSInfos = 
+            sourceFsHandling.Zip(targetFsHandling,
+                (source, target) => source.fsInfo.Name == target.fsInfo.Name
+                                    ? (source, target) 
+                                    : (source, null)
         );
 
 
-        foreach ((FileSystemInfo source, FileSystemInfo? target) fsInfoPair in pairedFSInfos)
+        foreach (var (source, target) in pairedFSInfos)
         {
-            if (target is null)
-            {
-                source.CopyTo(target);
-                continue;
-            }
+            bool forceCopy = target is null;
 
-            if (fsInfoPair.target is FileInfo targetFile)
+            if (source.fsInfo is DirectoryInfo sDirInfo)
             {
-                if (fsInfoPair.source.LastWriteTimeUtc != targetFile.LastWriteTimeUtc)
+                //if (forceCopy || Validation(sDirInfo, (DirectoryInfo)target.fsInfo))
+                //{
+                //    sDirInfo.CopyTo(targetDirInfo);
+                //}
+            }
+            else if (source.fsInfo is FileInfo sFileInfo)
+            {
+                if (forceCopy || Validation(sFileInfo, (FileInfo)target.fsInfo))
                 {
-                    //sourceFile.CopyTo(targetFile.FullName, overwrite: true);
+                    sFileInfo.CopyTo(Path.Combine(targetDirInfo.FullName, sFileInfo.Name), overwrite: true);
                 }
             }
-            else if (fsInfoPair.target is DirectoryInfo targetDir)
+            source.handled = true;
+            target?.handled = true;
+        }
+
+        DeleteFiles();
+        return;
+
+
+        static bool Validation(FileInfo f1, FileInfo f2)
+        {
+            return f1.Length == f2.Length 
+                && f1.LastWriteTime == f2.LastWriteTime;
+        }
+
+        void DeleteFiles()
+        {
+            var filesToDelete = targetFsHandling
+                .Except(sourceFsHandling);
+
+            foreach (var fileToDelete in filesToDelete)
             {
-                
+                switch (fileToDelete.fsInfo)
+                {
+                    case DirectoryInfo dirInfo:
+                        dirInfo.Delete(recursive: true);
+                        break;
+                    case FileInfo fileInfo:
+                        fileInfo.Delete();
+                        break;
+                }
             }
         }
+    }
+
+    public class FileSysInfoHandling
+    {
+        public bool handled;
+        public FileSystemInfo fsInfo;
     }
 }
