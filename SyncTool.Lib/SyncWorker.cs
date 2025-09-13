@@ -49,7 +49,7 @@ public class SyncWorker
             }
             else if (source.fsInfo is FileInfo sFileInfo)
             {
-                if (forceCopy || Validation(sFileInfo, (FileInfo)target.fsInfo))
+                if (forceCopy || !IsUpToDate(sFileInfo, (FileInfo)target.fsInfo))
                 {
                     sFileInfo.CopyTo(Path.Combine(targetDirInfo.FullName, sFileInfo.Name), overwrite: true);
                 }
@@ -62,7 +62,7 @@ public class SyncWorker
         return;
 
 
-        static bool Validation(FileInfo f1, FileInfo f2)
+        static bool IsUpToDate(FileInfo f1, FileInfo f2)
         {
             return f1.Length == f2.Length 
                 && f1.LastWriteTime == f2.LastWriteTime;
@@ -71,7 +71,7 @@ public class SyncWorker
         void DeleteFiles()
         {
             var filesToDelete = targetFsHandling
-                .Except(sourceFsHandling);
+                .Where(t => !sourceFsHandling.Any(s => s.fsInfo.Name == t.fsInfo.Name));
 
             foreach (var fileToDelete in filesToDelete)
             {

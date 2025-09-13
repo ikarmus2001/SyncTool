@@ -4,11 +4,12 @@ using Xunit.Abstractions;
 
 namespace SyncTool.xUnit;
 
-public class PlainFilesTests : IClassFixture<PlainFilesTestsFixture>
+public abstract class PlainFilesTests<TFixture> : IClassFixture<TFixture>
+    where TFixture : PlainFilesTestsFixtureBase
 {
-    private PlainFilesTestsFixture _fixture;
+    private TFixture _fixture;
 
-    public PlainFilesTests(PlainFilesTestsFixture fixture, ITestOutputHelper logOutput)
+    public PlainFilesTests(TFixture fixture, ITestOutputHelper logOutput)
     {
         _fixture = fixture;
         _fixture.InitLog(logOutput);
@@ -48,7 +49,8 @@ public class PlainFilesTests : IClassFixture<PlainFilesTestsFixture>
     [Fact]
     public void FilesAreDeletedInTargetDirectory()
     {
-        _fixture.DeleteRandomFiles();
+        _fixture.DeleteFiles();
+
         SyncWorker syncWorker = new()
         {
             SourcePath = _fixture.SourcePath,
@@ -64,13 +66,13 @@ public class PlainFilesTests : IClassFixture<PlainFilesTestsFixture>
     {
         var movedFiles = Directory.GetFiles(_fixture.TargetPath, "*", SearchOption.AllDirectories)
             .Select(f => Path.GetFileName(f));
-        _fixture.logger?.LogInformation("Moved files: {movedFiles}", movedFiles.Select(f => f + Environment.NewLine));
-
-        Assert.NotEmpty(movedFiles);
+        _fixture.logger?.LogInformation("Target files ({count}): {movedFiles}", 
+            movedFiles.Count(), movedFiles.Select(f => f + Environment.NewLine));
 
         var sourceFiles = Directory.GetFiles(_fixture.SourcePath, "*", SearchOption.AllDirectories)
             .Select(f => Path.GetFileName(f));
-        _fixture.logger?.LogInformation("Source files: {sourceFiles}", sourceFiles.Select(f => f + Environment.NewLine));
+        _fixture.logger?.LogInformation("Source files ({count}): {sourceFiles}", 
+            sourceFiles.Count(), sourceFiles.Select(f => f + Environment.NewLine));
 
         Assert.Equivalent(sourceFiles, movedFiles);
     }
@@ -79,4 +81,16 @@ public class PlainFilesTests : IClassFixture<PlainFilesTestsFixture>
     // assure output directory exist (default create, flag for using only )
     // assure identical (to metadata level)
 
+}
+
+public class RandomPlainFilesTests : PlainFilesTests<RandomFilesTestsFixture>, IClassFixture<RandomFilesTestsFixture>
+{
+    public RandomPlainFilesTests(RandomFilesTestsFixture fixture, ITestOutputHelper logOutput) 
+        : base(fixture, logOutput) { }
+}
+
+public class HardcodedPlainFilesTests : PlainFilesTests<HardcodedTests.PlainFilesFixture>, IClassFixture<HardcodedTests.PlainFilesFixture>
+{
+    public HardcodedPlainFilesTests(HardcodedTests.PlainFilesFixture fixture, ITestOutputHelper logOutput) 
+        : base(fixture, logOutput) { }
 }
