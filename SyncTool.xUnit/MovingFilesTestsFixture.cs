@@ -1,29 +1,32 @@
 ﻿using Bogus;
+using Microsoft.Extensions.Logging;
+using Xunit.Abstractions;
 
 namespace SyncTool.xUnit;
 
 public class MovingFilesTestsFixture : IDisposable
 {
-    private Faker faker = new();
+    private readonly Faker faker = new();
+    public ILogger? logger;
 
-    public string sourcePath { get; init; }
-    public string targetPath { get; init; }
+    public string SourcePath { get; init; }
+    public string TargetPath { get; init; }
 
     public MovingFilesTestsFixture()
     {
-        sourcePath = Path.Combine(
+        SourcePath = Path.Combine(
             Path.GetTempPath(),
             faker.Random.Word()
         );
-        if (Directory.Exists(sourcePath)) { Directory.Delete(sourcePath); }
-        Directory.CreateDirectory(sourcePath);
+        if (Directory.Exists(SourcePath)) { Directory.Delete(SourcePath); }
+        Directory.CreateDirectory(SourcePath);
 
-        targetPath = Path.Combine(
+        TargetPath = Path.Combine(
             Path.GetTempPath(),
             faker.Random.Word()
         );
-        if (Directory.Exists(targetPath)) { Directory.Delete(targetPath); }
-        Directory.CreateDirectory(targetPath);
+        if (Directory.Exists(TargetPath)) { Directory.Delete(TargetPath); }
+        Directory.CreateDirectory(TargetPath);
 
         var numberOfFiles = faker.Random.Int(5, 20);
         for (int i = 0; i < numberOfFiles; i++)
@@ -37,7 +40,7 @@ public class MovingFilesTestsFixture : IDisposable
         {
             using var streamWriter = File.CreateText(
                 Path.Combine(
-                    sourcePath, 
+                    SourcePath, 
                     $"{faker.Random.Word()}.{faker.System.CommonFileExt()}"
                 )
             );
@@ -45,10 +48,28 @@ public class MovingFilesTestsFixture : IDisposable
         }
     }
 
+    internal void InitLog(ITestOutputHelper logOutput)
+    {
+        logger = new Logging(logOutput).Logger;
+    }
+
+    internal void AddChangesInFiles()
+    {
+        var sourceDirInfo = new DirectoryInfo(SourcePath);
+        var files = sourceDirInfo.GetFiles();
+
+        var filesToMod = faker.PickRandom(files, faker.Random.Int(1, files.Length));
+        logger?.LogInformation("Modifying files: {file names}", filesToMod.Select(f => f.FullName + Environment.NewLine));
+        foreach (var file in filesToMod)
+        {
+            using var sw = file.CreateText();
+            sw.Write(faker.Lorem.Paragraphs(faker.Random.Int(1, 5)));
+        }
+    }
 
     public void Dispose()
     {
-        Directory.Delete(sourcePath, recursive: true);
-        Directory.Delete(targetPath, recursive: true);
+        Directory.Delete(SourcePath, recursive: true);
+        Directory.Delete(TargetPath, recursive: true);
     }
 }
