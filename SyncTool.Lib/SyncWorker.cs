@@ -14,9 +14,11 @@ public class SyncWorker
             : new DirectoryInfo(TargetPath);
 
         IEnumerable<FileSystemInfo> targetFSInfos = target.EnumerateFileSystemInfos();
-        if (targetFSInfos.Count() == 0)
+        
+        if (targetFSInfos.Count() == 0)  // optimization for empty target dir
         {
             source.CopyTo(target);
+            return;
         }
 
         IEnumerable<FileSystemInfo> sourceFSInfos = source.EnumerateFileSystemInfos();
