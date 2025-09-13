@@ -6,7 +6,7 @@ public class SyncWorker
     public string TargetPath { get; set; }
     public TimeSpan Period { get; set; }
 
-    public void MoveFiles()
+    public void SyncFiles()
     {
         DirectoryInfo source = new(SourcePath);
         DirectoryInfo target = !Directory.Exists(TargetPath)  // && TODO flag for error

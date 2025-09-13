@@ -24,7 +24,7 @@ public class MovingFilesTests : IClassFixture<MovingFilesTestsFixture>
             Period = TimeSpan.Zero
         };
 
-        syncWorker.MoveFiles();
+        syncWorker.SyncFiles();
 
         AssertDirsContainsEquivalentFiles(_fixture.SourcePath, _fixture.TargetPath);
     }
@@ -40,7 +40,7 @@ public class MovingFilesTests : IClassFixture<MovingFilesTestsFixture>
             TargetPath = _fixture.TargetPath,
             Period = TimeSpan.Zero
         };
-        syncWorker.MoveFiles();
+        syncWorker.SyncFiles();
 
         AssertDirsContainsEquivalentFiles(_fixture.SourcePath, _fixture.TargetPath);
     }
@@ -58,7 +58,6 @@ public class MovingFilesTests : IClassFixture<MovingFilesTestsFixture>
         _fixture.logger?.LogInformation("Source files: {sourceFiles}", sourceFiles.Select(f => f + Environment.NewLine));
 
         Assert.Equivalent(sourceFiles, movedFiles);
-
     }
 
     // assure input directory exist
