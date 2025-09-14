@@ -8,7 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\SyncTool.Lib\SyncTool.Lib.csproj" />
+    <PackageReference Include="ConsoleAppFramework" Version="5.6.1">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.9" />
+    <PackageReference Include="Serilog.Extensions.Logging.File" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SyncTool.Worker\SyncTool.Worker.csproj" />
   </ItemGroup>
 
 </Project>

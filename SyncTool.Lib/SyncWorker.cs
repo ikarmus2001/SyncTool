@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace SyncTool.Lib;
+﻿namespace SyncTool.Lib;
 
 public class SyncWorker
 {
@@ -88,7 +86,7 @@ public class SyncWorker
         }
     }
 
-    public class FileSysInfoHandling
+    private class FileSysInfoHandling
     {
         public bool handled;
         public FileSystemInfo fsInfo;

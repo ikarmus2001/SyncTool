@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SyncTool.CLI": {
+      "commandName": "Project",
+      "commandLineArgs": "sync --source %temp%\\\\Debug --replica %temp%\\\\Replica"
+    }
+  }
+}

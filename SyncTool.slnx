@@ -4,5 +4,6 @@
   </Folder>
   <Project Path="SyncTool.CLI/SyncTool.CLI.csproj" />
   <Project Path="SyncTool.Lib/SyncTool.Lib.csproj" Id="f88439e4-3354-47e3-813d-c7ccfbc72ccf" />
+  <Project Path="SyncTool.Worker/SyncTool.Worker.csproj" />
   <Project Path="SyncTool.xUnit/SyncTool.xUnit.csproj" Id="73b201f3-4037-4f31-b88b-b57992f214c3" />
 </Solution>
