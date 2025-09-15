@@ -1,4 +1,19 @@
-﻿This software synchronizes two folders: `source` and `replica`.
+# Usage
+```powershell
+> .\SyncTool.CLI.exe sync
+Usage: sync [options...] [-h|--help] [--version]
+
+Start a sync operation on a schedule
+
+Options:
+  --source <string>              Path to the directory, which will be the basepoint for syncing (Required)
+  --replica <string>             Target directory, where files will be synced to (Required)
+  --cron <string>                Cron expression for scheduling the sync operation
+         Every two minutes by default (Default: @"*/2 * * * *")
+  --create-replica-dir <bool>    Set to false to disable auto-creation of the replica directory (Default: true)
+```
+
+ This software synchronizes two folders: `source` and `replica`.
 # Features
 ## 1. Identical
 Maintains a full, identical copy of source folder at replica folder.
