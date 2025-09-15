@@ -1,6 +1,7 @@
 ﻿using Cronos;
 using SyncTool.Lib;
 using System.Diagnostics;
+using System.IO.Pipes;
 using Command = ConsoleAppFramework.CommandAttribute;
 
 
@@ -27,6 +28,9 @@ internal class App
     /// <param name="createReplicaDir">
     ///     Set to false to disable auto-creation of the replica directory
     /// </param>
+    /// <remarks>
+    ///     Spawns worker in background process (started if not running already)
+    /// </remarks>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="DirectoryNotFoundException"></exception>
     [Command(CommandNames.sync)]
@@ -35,7 +39,7 @@ internal class App
         logger.Information($"{CommandNames.sync} invoked");
         var sDirInfo = new DirectoryInfo(source);  // validate source dir
         var rDirInfo = new DirectoryInfo(replica);
-        if (!sDirInfo.Exists) // && rDirInfo.Exists == false)
+        if (!sDirInfo.Exists)
         {
 #if DEBUG
             sDirInfo.Create();
@@ -53,27 +57,71 @@ internal class App
             }
             rDirInfo.Create();
         }
+        
+        _ = GetBackgroundProcess();
 
-        var worker = new SyncWorker()
-        {
-            SourcePath = source,
-            TargetPath = replica,
-            Period = cron.CronExpToTimeSpan(),
-        };
+        ScheduleSync();
+        return;
 
-        var process = new Process
+
+        Process GetBackgroundProcess()
         {
-            StartInfo = new ProcessStartInfo()
+            var workerProcesses = Process.GetProcessesByName(typeof(Worker.Worker).Assembly.GetName().Name)
+                .ToList();
+
+            Process workerProcess = workerProcesses.Count == 0
+                ? SpawnBackgroundWorker()
+                : workerProcesses.First();
+
+            if (workerProcesses.Count > 1)
             {
-                FileName = "dotnet",
-                Arguments = typeof(SyncTool.Worker.Worker).Assembly.Location
-                //Path.Combine(
-                //    new FileInfo(Environment.ProcessPath).Directory,
-                //    )
+                logger.Warning("Multiple sync worker processes detected. This might lead to unexpected behavior.");
             }
-        };
-        // todo sync workers list
-        process.Start();
+            logger.Information($"Communicating with {workerProcess.Id}");
+            return workerProcess;
+
+
+            static Process SpawnBackgroundWorker()
+            {
+                var process = new Process
+                {
+                    StartInfo = new ProcessStartInfo()
+                    {
+                        FileName = "dotnet",
+                        Arguments = typeof(Worker.Worker).Assembly.Location
+                    }
+                };
+                process.Start();
+                return process;
+            }
+        }
+
+        void ScheduleSync()
+        {
+            // Prepare config
+            var worker = new SyncWorker()
+            {
+                SourcePath = source,
+                TargetPath = replica,
+                Period = cron.CronExpToTimeSpan(),
+            };
+            var workerConfig = System.Text.Json.JsonSerializer.Serialize(worker, SyncTool.Lib.Communication.Constants.JsonSerializerOptions);
+
+            NamedPipeClientStream namedPipeClientStream = new(SyncTool.Lib.Communication.Constants.PipeName);
+            namedPipeClientStream.Connect(TimeSpan.FromSeconds(5));
+
+            using (StreamWriter sw = new(namedPipeClientStream, leaveOpen: true))
+            {
+                sw.WriteLine(workerConfig);
+                sw.Flush();
+            }
+
+            using StreamReader sr = new(namedPipeClientStream);
+            var response = sr.ReadLine();
+
+            var createWorkerResponse = System.Text.Json.JsonSerializer.Deserialize<Lib.Communication.CreateWorkerResponse>(response);
+            logger.Information($"Got worker id: '{createWorkerResponse?.createdWorkerId}'");
+        }
     }
 }
 
