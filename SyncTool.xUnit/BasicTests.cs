@@ -4,12 +4,12 @@ using Xunit.Abstractions;
 
 namespace SyncTool.xUnit;
 
-public abstract class PlainFilesTests<TFixture> : IClassFixture<TFixture>
-    where TFixture : PlainFilesTestsFixtureBase
+public abstract class BasicTests<TFixture> : IClassFixture<TFixture>
+    where TFixture : FixtureBase
 {
     private TFixture _fixture;
 
-    public PlainFilesTests(TFixture fixture, ITestOutputHelper logOutput)
+    public BasicTests(TFixture fixture, ITestOutputHelper logOutput)
     {
         _fixture = fixture;
         _fixture.InitLog(logOutput);
@@ -83,14 +83,20 @@ public abstract class PlainFilesTests<TFixture> : IClassFixture<TFixture>
 
 }
 
-public class RandomPlainFilesTests : PlainFilesTests<RandomFilesTestsFixture>, IClassFixture<RandomFilesTestsFixture>
+public class RandomPlainFilesTests : BasicTests<RandomFilesTestsFixture>, IClassFixture<RandomFilesTestsFixture>
 {
     public RandomPlainFilesTests(RandomFilesTestsFixture fixture, ITestOutputHelper logOutput) 
         : base(fixture, logOutput) { }
 }
 
-public class HardcodedPlainFilesTests : PlainFilesTests<HardcodedTests.PlainFilesFixture>, IClassFixture<HardcodedTests.PlainFilesFixture>
+public class HardcodedPlainFilesTests : BasicTests<HardcodedTests.PlainFilesFixture>, IClassFixture<HardcodedTests.PlainFilesFixture>
 {
     public HardcodedPlainFilesTests(HardcodedTests.PlainFilesFixture fixture, ITestOutputHelper logOutput) 
+        : base(fixture, logOutput) { }
+}
+
+public class HardcodedManySubdirsTests : BasicTests<HardcodedTests.ManySubdirsFixture>, IClassFixture<HardcodedTests.ManySubdirsFixture>
+{
+    public HardcodedManySubdirsTests(HardcodedTests.ManySubdirsFixture fixture, ITestOutputHelper logOutput) 
         : base(fixture, logOutput) { }
 }
