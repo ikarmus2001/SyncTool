@@ -89,6 +89,12 @@ public class RandomPlainFilesTests : BasicTests<RandomFilesTestsFixture>, IClass
         : base(fixture, logOutput) { }
 }
 
+public class RandomManySubdirsTests : BasicTests<RandomManyDirsFixture>, IClassFixture<RandomManyDirsFixture>
+{
+    public RandomManySubdirsTests(RandomManyDirsFixture fixture, ITestOutputHelper logOutput) 
+        : base(fixture, logOutput) { }
+}
+
 public class HardcodedPlainFilesTests : BasicTests<HardcodedTests.PlainFilesFixture>, IClassFixture<HardcodedTests.PlainFilesFixture>
 {
     public HardcodedPlainFilesTests(HardcodedTests.PlainFilesFixture fixture, ITestOutputHelper logOutput) 
